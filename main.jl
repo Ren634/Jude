@@ -6,6 +6,25 @@ mutable struct Variable
     end
 end
 
+function call(func,inputs :: Variable ...)
+    xs = [input.data for input in inputs]
+    ys = forward(func,xs...)
+    if (!isa(ys,Array{Any}))
+        ys = (ys)
+    end
+    outputs = [Variable(y) for y in ys]
+    func.inputs = inputs
+    func.outputs = [output for output in outputs]
+    for output in outputs
+        output.creator = func
+    end
+    if (length(outputs) > 1)
+        return outputs
+    else 
+        return outputs[1]
+    end
+end
+
 mutable struct Add
     inputs
     outputs
@@ -21,25 +40,6 @@ function forward(func :: Add,x0 :: Array{Float64},x1::Array{Float64})
     return y
 end
 
-function call(func,inputs :: Variable ...)
-    xs = [input.data for input in inputs]
-    ys = forward(func,xs...)
-    if (!isa(ys,Array{Any}))
-        ys = (ys)
-    end
-    outputs = [Variable(y) for y in ys]
-    println(outputs)
-    func.inputs = inputs
-    func.outputs = [output for output in outputs]
-    for output in outputs
-        output.creator = func
-    end
-    if (length(outputs) > 1)
-        return outputs
-    else 
-        return outputs[1]
-    end
-end
 
 
 x = Variable([1.0])
