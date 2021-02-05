@@ -68,12 +68,28 @@ mutable struct Add
     generation
 end
 
-function add(x0, x1)
-    self = Add(nothing, nothing)
+function as_variable(x::Number)
+    Variable([x])
+end
+
+function Base.:+(x0::Variable, x1::Variable)
+    self = Add(nothing, nothing, nothing)
     call(self, x0, x1)
 end
 
-function forward(func::Add, x0::Array{Float64}, x1::Array{Float64})
+function Base.:+(x0::Number, x1::Variable)
+    x0 = as_variable(x0)
+    self = Add(nothing, nothing, nothing)
+    call(self, x0, x1)
+end
+
+function Base.:+(x0::Variable, x1::Number)
+    x1 = as_variable(x1)
+    self = Add(nothing, nothing, nothing)
+    call(self, x0, x1)
+end
+
+function forward(func::Add, x0, x1)
     y = x0 + x1
     return y
 end
@@ -88,18 +104,18 @@ mutable struct Mul
     generation
 end
 
-function mul(x0, x1)
-    self = Add(nothing, nothing)
+function Base.:*(x0::Variable, x1::Variable)
+    self = Mul(nothing, nothing, nothing)
     call(self, x0, x1)
 end
 
-function forward(func::Mull, x0::Array{Float64}, x1::Array{Float64})
+function forward(func::Mul, x0::Array{Number}, x1::Array{Number})
     y = x0 * x1
     return y
 end
 
 x = Variable([1.0])
 y = Variable([2.0])
-z = add(x, y)
+z = x + 1
 println(z.data)
 println(z.creator)
