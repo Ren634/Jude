@@ -10,6 +10,10 @@ mutable struct Variable
     end
 end
 
+function Base.println(variable::Variable)
+    println(variable.data)
+end
+
 function backward(variable::Variable)
     if (variable.grad === nothing)
         variable.grad = Variable(ones(size(variable.data)))
@@ -22,19 +26,23 @@ function backward(variable::Variable)
             push!(func_set, f)
         end
     end
-    while (funcs)
-        f = popmax!(funcs)
+    add_func(variable.creator)
+    while (!isempty(funcs))
+        _, f = popmax!(funcs)
         gys = [output.value.grad for output in f.outputs]
         gxs = backward(f, gys...)
+        if (isa(gxs, Tuple{Any}))
+            gxs = (gxs,)
+        end
         for (x, gx) in zip(f.inputs, gxs)
             if (x.grad === nothing)
                 x.grad = gx
             else
                 x.grad = x.grad + gx
             end
-        end
-        for input in f.inputs
-            add_func(input.creator)
+            if (x.creator !== nothing)
+                add_func(x.creator)
+            end
         end
     end
 end
@@ -46,7 +54,7 @@ end
 
 function call(func, inputs::Variable ...)
     xs = [input.data for input in inputs]
-    ys = forward(func, xs...)
+    ys = [forward(func, xs...)]
     if (!isa(ys, Array{Any}))
         ys = (ys)
     end
@@ -97,7 +105,7 @@ function forward(func::Add, x0::Array{Float64}, x1::Array{Float64})
 end
 
 function backward(func::Add, gy)
-    return gy
+    return gy, gy
 end
 
 mutable struct Mul
@@ -118,7 +126,6 @@ end
 
 x = Variable([1.0])
 y = Variable([2.0])
-z = x + 1
+z = x + x
 backward(z)
-println(z.data)
-println(z.creator)
+println(x.grad)
