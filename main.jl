@@ -11,8 +11,8 @@ mutable struct Variable
 end
 
 function backward(variable::Variable)
-    if (variable.grad == nothing)
-        variable.grad = Variable(ones(size(variable)))
+    if (variable.grad === nothing)
+        variable.grad = Variable(ones(size(variable.data)))
     end
     funcs = BinaryMinMaxHeap{Tuple{Int,Any}}()
     func_set = Set()
@@ -22,17 +22,19 @@ function backward(variable::Variable)
             push!(func_set, f)
         end
     end
-
     while (funcs)
         f = popmax!(funcs)
         gys = [output.value.grad for output in f.outputs]
         gxs = backward(f, gys...)
         for (x, gx) in zip(f.inputs, gxs)
-            if (x.grad == nothing)
+            if (x.grad === nothing)
                 x.grad = gx
             else
                 x.grad = x.grad + gx
             end
+        end
+        for input in f.inputs
+            add_func(input.creator)
         end
     end
 end
@@ -69,7 +71,7 @@ mutable struct Add
 end
 
 function as_variable(x::Number)
-    Variable([x])
+    Variable([Float64(x)])
 end
 
 function Base.:+(x0::Variable, x1::Variable)
@@ -89,7 +91,7 @@ function Base.:+(x0::Variable, x1::Number)
     call(self, x0, x1)
 end
 
-function forward(func::Add, x0, x1)
+function forward(func::Add, x0::Array{Float64}, x1::Array{Float64})
     y = x0 + x1
     return y
 end
@@ -117,5 +119,6 @@ end
 x = Variable([1.0])
 y = Variable([2.0])
 z = x + 1
+backward(z)
 println(z.data)
 println(z.creator)

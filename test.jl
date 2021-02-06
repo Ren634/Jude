@@ -1,1 +1,8 @@
-1 + 2.0
+mutable struct A
+    function b()
+        println("aaa")
+    end
+end
+
+a = A
+a.b()
