@@ -114,18 +114,36 @@ mutable struct Mul
     generation
 end
 
-function Base.:*(x0::Variable, x1::Variable)
-    self = Mul(nothing, nothing, nothing)
-    call(self, x0, x1)
-end
-
-function forward(func::Mul, x0::Array{Number}, x1::Array{Number})
-    y = x0 * x1
+function forward(func::Mul, x0::Array{Float64}, x1::Array{Float64})
+    y = x0 .* x1
     return y
 end
 
-x = Variable([1.0])
-y = Variable([2.0])
-z = x + x
+function backward(func::Mul, gy)
+    x0, x1 = func.inputs
+    return x1 * gy, x0 * gy
+end
+
+function Base.:*(x0::Variable, x1::Variable)
+    self = Mul(nothing, nothing, nothing)
+    return call(self, x0, x1)
+end    
+
+function Base.:*(x0::Number, x1::Variable)
+    x0 = as_variable(x0)
+    self = Mul(nothing, nothing, nothing)
+    return call(self, x0, x1)
+end    
+
+function Base.:*(x0::Variable, x1::Number)
+    x1 = as_variable(x1)
+    self = Mul(nothing, nothing, nothing)
+    return call(self, x0, x1)
+end        
+
+x = Variable([1.0,3.0])
+y = Variable([2.0,5])
+z = y * x + x
 backward(z)
+println(z)
 println(x.grad)
