@@ -64,13 +64,13 @@ function call(func, inputs::Variable ...)
     func.generation = maximum([input.generation for input in inputs])
     for output in outputs
         set_creator(output, func)
-    end
-    if (length(outputs) > 1)
+    end 
+    if (length(outputs) > 1)   
         return outputs
     else 
         return outputs[1]
-    end
-end
+    end    
+end    
 
 mutable struct Add
     inputs
@@ -78,34 +78,10 @@ mutable struct Add
     generation
 end
 
-function as_variable(x::Number)
-    Variable([Float64(x)])
-end
-
-function Base.:+(x0::Variable, x1::Variable)
-    self = Add(nothing, nothing, nothing)
-    call(self, x0, x1)
-end
-
-function Base.:+(x0::Number, x1::Variable)
-    x0 = as_variable(x0)
-    self = Add(nothing, nothing, nothing)
-    call(self, x0, x1)
-end
-
-function Base.:+(x0::Variable, x1::Number)
-    x1 = as_variable(x1)
-    self = Add(nothing, nothing, nothing)
-    call(self, x0, x1)
-end
-
-function forward(func::Add, x0::Array{Float64}, x1::Array{Float64})
-    y = x0 + x1
-    return y
-end
-
-function backward(func::Add, gy)
-    return gy, gy
+mutable struct Sub
+    inputs
+    outputs
+    generation
 end
 
 mutable struct Mul
@@ -114,36 +90,150 @@ mutable struct Mul
     generation
 end
 
+mutable struct Div
+    inputs
+    outputs
+    generation
+end
+
+mutable struct Neg
+    inputs
+    outputs
+    generation
+end
+
+mutable struct Pow
+    inputs
+    outputs
+    generation
+    exponent 
+end
+
+
+
+function as_variable(x::Number)
+    Variable([Float64(x)])
+end    
+
+
+function forward(func::Add, x0::Array{Float64}, x1::Array{Float64})
+    y = x0 + x1
+    return y
+end    
+
+function backward(func::Add, gy)
+    return gy, gy
+end    
+
+
 function forward(func::Mul, x0::Array{Float64}, x1::Array{Float64})
     y = x0 .* x1
     return y
-end
+end    
 
 function backward(func::Mul, gy)
     x0, x1 = func.inputs
     return x1 * gy, x0 * gy
+end    
+
+function forward(func::Sub, x0::Array{Float64}, x1::Array{Float64})
+    y = x0 - x1
+    return y
+end
+
+function backward(func::Sub, gy)
+    return gy, -gy
+end
+
+function forward(func::Div, x0::Array{Float64}, x1::Array{Float64})
+    y = x0 / x1
+    return y
+end
+
+function backward(func::Div, gy)
+    x0, x1 = func.inputs
+    return 1 / x1, (-x0) / (x1^2)
+end
+
+function forward(func::Pow, x0::Array{Float64})
+    exponent = func.exponent
+    return x0^exponent
+end
+
+function backward(func::Pow, gy)
+    x0 = func.inputs
+    exponent = func.exponent
+    gx = exponent * (x0^(exponent - 1)) * gy
+    return gx
+end
+
+function forward(func::Neg, x0::Array{Float64})
+    return -x0
+end
+
+function backward(func::Neg, gy)
+    return -gy
+end
+
+function Base.:+(x0::Variable, x1::Variable)
+    self = Add(nothing, nothing, nothing)
+    call(self, x0, x1)
+end    
+
+function Base.:+(x0::Number, x1::Variable)
+    x0 = as_variable(x0)
+    self = Add(nothing, nothing, nothing)
+    call(self, x0, x1)
+end    
+
+function Base.:+(x0::Variable, x1::Number)
+    x1 = as_variable(x1)
+    self = Add(nothing, nothing, nothing)
+    call(self, x0, x1)
+end  
+
+function Base.:-(x0::Variable, x1::Variable)
+    self = Sub(nothing, nothing, nothing)
+    call(self, x0, x1)
+end
+
+function Base.:-(x0::Variable, x1::Number)
+    x1 = as_variable(x1)
+    self = Sub(nothing, nothing, nothing)
+    call(self, x0, x1)
+end
+
+function Base.:-(x0::Number, x1::Variable)
+    x0 = as_variable(x0)
+    self = Sub(nothing, nothing, nothing)
+    call(self, x0, x1)
+end
+
+function Base.:-(x0::Variable)
+    self = Neg(nothing, nothing, nothing)
+    call(self, x0)
 end
 
 function Base.:*(x0::Variable, x1::Variable)
     self = Mul(nothing, nothing, nothing)
     return call(self, x0, x1)
-end    
+end        
 
 function Base.:*(x0::Number, x1::Variable)
     x0 = as_variable(x0)
     self = Mul(nothing, nothing, nothing)
     return call(self, x0, x1)
-end    
+end  
 
 function Base.:*(x0::Variable, x1::Number)
     x1 = as_variable(x1)
     self = Mul(nothing, nothing, nothing)
     return call(self, x0, x1)
-end        
+end            
 
 x = Variable([1.0,3.0])
 y = Variable([2.0,5])
-z = y * x + x
+z = x - (y * y) 
 backward(z)
 println(z)
-println(x.grad)
+println(y.grad)
