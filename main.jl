@@ -117,7 +117,7 @@ end
 
 
 function forward(func::Add, x0::Array{Float64}, x1::Array{Float64})
-    y = x0 + x1
+    y = x0 .+ x1
     return y
 end    
 
@@ -137,7 +137,7 @@ function backward(func::Mul, gy)
 end    
 
 function forward(func::Sub, x0::Array{Float64}, x1::Array{Float64})
-    y = x0 - x1
+    y = x0 .- x1
     return y
 end
 
@@ -146,7 +146,7 @@ function backward(func::Sub, gy)
 end
 
 function forward(func::Div, x0::Array{Float64}, x1::Array{Float64})
-    y = x0 / x1
+    y = x0 ./ x1
     return y
 end
 
@@ -233,7 +233,7 @@ end
 
 x = Variable([1.0,3.0])
 y = Variable([2.0,5])
-z = x - (y * y) 
+z = x - 1 
 backward(z)
 println(z)
-println(y.grad)
+println(x.grad)
