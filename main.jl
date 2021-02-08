@@ -237,9 +237,3 @@ function Base.:*(x0::Variable, x1::Number)
     return call(self, x0, x1)
 end            
 
-x = Variable([1.0,3.0])
-y = Variable([2.0,5])
-z = x - 1 
-backward(z)
-println(z)
-println(x.grad)
