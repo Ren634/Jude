@@ -70,7 +70,13 @@ function call(func, inputs::Variable ...)
     else 
         return outputs[1]
     end    
-end    
+end
+
+function clear_grad(variables::Variable ...)
+    for variable in variables
+        variable.grad = nothing
+    end
+end
 
 mutable struct Add
     inputs
