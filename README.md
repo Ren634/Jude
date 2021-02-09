@@ -1,2 +1,0 @@
-# Jude
-dezeroの移植
