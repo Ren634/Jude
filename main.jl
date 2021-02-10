@@ -31,9 +31,6 @@ function backward(variable::Variable)
         _, f = popmax!(funcs)
         gys = [output.value.grad for output in f.outputs]
         gxs = backward(f, gys...)
-        if (!isa(gxs, Tuple{Any}))
-            gxs = (gxs)
-        end
         for (x, gx) in zip(f.inputs, gxs)
             if (x.grad === nothing)
                 x.grad = gx
